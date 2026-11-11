@@ -1,3 +1,4 @@
+// Keep this entrypoint ESM on Vercel, whose function loader may ignore package type metadata.
 import 'dotenv/config';
 import cors from 'cors';
 import express, { type ErrorRequestHandler } from 'express';
