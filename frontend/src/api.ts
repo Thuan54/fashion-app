@@ -65,6 +65,7 @@ export async function apiRequest<T>(
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
   });
   const responseText = await response.text();
+  const responsePreview = responseText.replace(/\s+/g, ' ').trim().slice(0, 180);
   let result: ({ error?: string } & T) | null = null;
   if (responseText.trim()) {
     try {
@@ -73,15 +74,15 @@ export async function apiRequest<T>(
       const looksLikeHtml = /<!doctype html|<html[\s>]/i.test(responseText.slice(0, 500));
       throw new ApiError(
         looksLikeHtml
-          ? `API request ${path} returned the website HTML instead of API data (HTTP ${response.status}). Check the Vercel API route deployment.`
-          : `API request ${path} returned an invalid response (HTTP ${response.status}).`,
+          ? `API request ${path} returned HTML instead of API data (HTTP ${response.status}). ${responsePreview}`
+          : `API request ${path} returned an invalid response (HTTP ${response.status}). ${responsePreview}`,
         response.status,
       );
     }
   }
   if (!result) {
     throw new ApiError(
-      `API returned an empty response (HTTP ${response.status}). Check the Vercel API function deployment.`,
+      `API request ${path} returned an empty response (HTTP ${response.status}). ${responsePreview}`,
       response.status,
     );
   }

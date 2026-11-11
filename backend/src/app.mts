@@ -196,11 +196,14 @@ const parsePostId = (value: string | string[] | undefined) => {
 app.get('/api/me', requireUser, async (_req, res, next) => {
   try {
     const database = getServices().database;
+    
+    
     const { data: existingProfile, error: lookupError } = await database
       .from('profiles')
       .select('id, username, display_name, bio, created_at')
       .eq('id', res.locals.userId)
       .maybeSingle();
+    
     if (lookupError) {
       if (lookupError.code === 'PGRST205' || lookupError.code === '42P01') {
         throw new HttpError(
@@ -462,7 +465,12 @@ app.use(((error: unknown, _req, res, _next) => {
     return;
   }
   console.error('API request failed:', error);
-  res.status(500).json({ error: 'The request could not be completed. Please try again.' });
+  const message = process.env.NODE_ENV === 'production'
+    ? 'The request could not be completed. Please try again.'
+    : error instanceof Error
+      ? error.message
+      : 'Unexpected backend error. Check the API terminal for details.';
+  res.status(500).json({ error: message });
 }) satisfies ErrorRequestHandler);
 
 export default app;
