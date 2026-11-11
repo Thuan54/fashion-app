@@ -153,6 +153,7 @@ const requireUser: express.RequestHandler = async (req, res, next) => {
       throw new HttpError(401, 'Invalid access token.');
     }
     res.locals.userId = payload.sub;
+    res.locals.userClaims = payload;
     next();
   } catch (error) {
     if (error instanceof HttpError) {
@@ -194,13 +195,79 @@ const parsePostId = (value: string | string[] | undefined) => {
 
 app.get('/api/me', requireUser, async (_req, res, next) => {
   try {
-    const { data, error } = await getServices().database
+    const database = getServices().database;
+    const { data: existingProfile, error: lookupError } = await database
       .from('profiles')
       .select('id, username, display_name, bio, created_at')
       .eq('id', res.locals.userId)
+      .maybeSingle();
+    if (lookupError) {
+      if (lookupError.code === 'PGRST205' || lookupError.code === '42P01') {
+        throw new HttpError(
+          503,
+          'The Supabase profiles table is missing. Run backend/supabase/schema.sql in the Supabase SQL Editor.',
+        );
+      }
+      throw lookupError;
+    }
+    if (existingProfile) {
+      res.json(existingProfile);
+      return;
+    }
+
+    const claims = res.locals.userClaims as Record<string, unknown>;
+    const rawMetadata = claims.user_metadata;
+    const metadata = rawMetadata && typeof rawMetadata === 'object'
+      ? rawMetadata as Record<string, unknown>
+      : {};
+    const emailName = typeof claims.email === 'string' ? claims.email.split('@')[0] : '';
+    const displayName = [
+      metadata.display_name,
+      metadata.full_name,
+      metadata.name,
+      emailName,
+    ].find((value): value is string => typeof value === 'string' && value.trim().length > 0)
+      ?.trim()
+      .slice(0, 80) ?? 'Creator';
+    const usernameBase = displayName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 21) || 'creator';
+    const username = `${usernameBase}_${String(res.locals.userId).replace(/-/g, '').slice(0, 8)}`;
+
+    const { data: createdProfile, error: insertError } = await database
+      .from('profiles')
+      .insert({
+        id: res.locals.userId,
+        username,
+        display_name: displayName,
+        bio: '',
+      })
+      .select('id, username, display_name, bio, created_at')
       .single();
-    if (error) throw error;
-    res.json(data);
+    if (insertError) {
+      if (insertError.code === 'PGRST205' || insertError.code === '42P01') {
+        throw new HttpError(
+          503,
+          'The Supabase profiles table is missing. Run backend/supabase/schema.sql in the Supabase SQL Editor.',
+        );
+      }
+      if (insertError.code === '23505') {
+        const { data: concurrentProfile, error: retryError } = await database
+          .from('profiles')
+          .select('id, username, display_name, bio, created_at')
+          .eq('id', res.locals.userId)
+          .maybeSingle();
+        if (retryError) throw retryError;
+        if (concurrentProfile) {
+          res.json(concurrentProfile);
+          return;
+        }
+      }
+      throw insertError;
+    }
+    res.status(200).json(createdProfile);
   } catch (error) {
     next(error);
   }

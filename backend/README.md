@@ -50,6 +50,10 @@ Variables for Production and Preview:
 Run [`supabase/schema.sql`](./supabase/schema.sql) in the Supabase SQL Editor before
 using account and post features. The frontend uses relative `/api/...` requests and
 local Vite development proxies those requests to `http://localhost:3001`.
+The auth trigger creates profiles for new users. `/api/me` also creates a missing
+profile on first authenticated request, which supports OAuth users who signed up before
+the schema/trigger was installed. If the `profiles` table itself is missing, apply the
+schema SQL first.
 
 ### Enable Google sign-in
 
