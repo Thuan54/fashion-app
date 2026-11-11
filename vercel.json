@@ -4,7 +4,8 @@
     "backend": {
       "root": "backend",
       "framework": "express",
-      "entrypoint": "src/app.mts"
+      "entrypoint": "src/app.mts",
+      "installCommand": "npm ci"
     },
     "frontend": {
       "root": "frontend",
