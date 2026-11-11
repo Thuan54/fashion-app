@@ -1,5 +1,5 @@
 // Keep this entrypoint ESM on Vercel, whose function loader may ignore package type metadata.
-import cors from 'cors';
+// import cors from 'cors';
 import express, { type ErrorRequestHandler } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
@@ -51,11 +51,12 @@ function getServices() {
   };
 }
 
-app.use(cors({
-  origin: (process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173')
-    .split(',')
-    .map((origin) => origin.trim()),
-}));
+// app.use(cors({
+//   origin: (process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173')
+//     .split(',')
+//     .map((origin) => origin.trim()),
+// }));
+
 app.use(express.json({ limit: '1mb' }));
 
 app.get('/api/health', (_req, res) => {
