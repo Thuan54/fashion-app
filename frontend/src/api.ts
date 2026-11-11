@@ -47,8 +47,6 @@ export class ApiError extends Error {
   }
 }
 
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/+$/, '');
-
 export async function apiRequest<T>(
   path: string,
   options: {
@@ -61,7 +59,7 @@ export async function apiRequest<T>(
   if (options.body !== undefined) headers.set('Content-Type', 'application/json');
   if (options.accessToken) headers.set('Authorization', `Bearer ${options.accessToken}`);
 
-  const response = await fetch(`${apiBaseUrl}/api${path}`, {
+  const response = await fetch(`/api${path}`, {
     method: options.method ?? 'GET',
     headers,
     body: options.body === undefined ? undefined : JSON.stringify(options.body),
