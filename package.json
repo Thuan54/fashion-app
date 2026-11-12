@@ -1,0 +1,8 @@
+{
+  "name": "fashion-app-monorepo",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ]
+}
