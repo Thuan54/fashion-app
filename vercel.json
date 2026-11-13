@@ -6,12 +6,12 @@
       "root": "backend",
       "framework": "express",
       "entrypoint": "src/app.mts",
-      "installCommand": "npm install --prefix .."
+      "installCommand": "npm install"
     },
     "frontend": {
       "root": "frontend",
       "framework": "vite",
-      "installCommand": "npm install --prefix .."
+      "installCommand": "npm install"
     }
   },
   "rewrites": [
