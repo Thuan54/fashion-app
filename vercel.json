@@ -6,7 +6,7 @@
       "root": "backend",
       "framework": "express",
       "entrypoint": "src/app.mts",
-      "installCommand": "npm install --prefix .."
+      "installCommand": "npm ci --workspaces=false"
     },
     "frontend": {
       "root": "frontend",
